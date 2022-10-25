@@ -18,24 +18,27 @@ class Config(object):
 
 class HookProxyServerHandler(BaseHTTPRequestHandler):
     def do_POST(self):
-        print("----------------[HookServer]收到POST请求------------------")
         # print(self.headers)
-        print(self.command)
-        print(self.path)
+        # print(self.command)
+        # print(self.path)
         if self.path == Config.HTTP_SERVER_PATH:
             req_datas = self.rfile.read(int(self.headers['content-length']))
-            print("----------------[HookServer]开始接受client发送的数据----------------")
+            print("[HookServer]开始接受client发送的数据")
             req = req_datas.decode('utf-8')
+            print("[HookServer]接收到的内容")
+            print(req)
+            print("[HookServer]" + "-"*50)
             try:
                 req_dict = json.loads(req)
             except json.JSONDecodeError as e:
-                print("----------------[HookServer]无法解析JSON，返回---------------")
+                print("[HookServer]无法解析JSON，返回")
                 return
-            print("----------------[HookServer]已接受client发送的数据------------------")
+            print("[HookServer]已接受client发送的数据")
             if "key" not in req_dict or req_dict["key"] != Config.HOOK_REQUEST_KEY:
-                print("----------------[HookServer]无法验证Key，非预期请求，返回---------------")
+                print("[HookServer]无法验证Key，非预期请求，返回")
                 return
-            print("----------------[HookServer]转发到代理------------------")
+            #-----------------------转发到ProxyServer-start---------------------
+            print("[HookServer]转发到ProxyServer")
             conn = HTTPConnection(Config.PROXY_SERVER_HOST, Config.PROXY_SERVER_PORT)
             payload = json.dumps(req_dict["data"])
             headers = {
@@ -45,11 +48,11 @@ class HookProxyServerHandler(BaseHTTPRequestHandler):
             conn.request("POST", "/proxy", payload, headers)
             res = conn.getresponse()
             res_data = res.read()
-            print("----------------[HookServer]转发到代理------------------")
+            #-----------------------转发到ProxyServer-end-----------------------
             try:
                 res_dict = json.loads(res_data)
             except json.JSONDecodeError as e:
-                print("返回封包失败，无法解析JSON")
+                print("[HookServer]返回封包失败，无法解析JSON")
             res_dict_2 = {
                 "data": res_dict
             }
@@ -61,35 +64,37 @@ class HookProxyServerHandler(BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
             self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-type")
             self.end_headers()
+
+            print("[HookServer]返回的内容")
+            print(res_data)
+            print("[HookServer]" + "-"*50)
+            
             self.wfile.write(res_data.encode("utf-8"))
         else:
-            print("----------------[HookServer]非预期的请求路径，丢弃！------------------")
+            print("[HookServer]非预期的请求路径，丢弃！")
             return
 
     def do_OPTIONS(self):
-        print("----------------[HookServer]OPTIONS请求------------------")
         self.send_response(200, "ok")
         self.send_header('Access-Control-Allow-Credentials', 'true')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-type")
         self.end_headers()
-        print("----------------[HookServer]OPTIONS请求已响应------------------")
 
 
 class ProxyServerHandler(BaseHTTPRequestHandler):
     def do_POST(self):
-        print(self.path)
+        # print(self.path)
         if self.path == Config.PROXY_HTTP_SERVER_PATH:
             req_datas = self.rfile.read(int(self.headers['content-length']))
-            print("----------------[ProxyServer]直接返回收到的内容----------------")
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
+            
             self.wfile.write(req_datas)
-            print("----------------[ProxyServer]直接返回收到的内容------------------")
         else:
-            print("----------------[ProxyServer]非预期的请求路径，丢弃！------------------")
+            print("[ProxyServer]非预期的请求路径，丢弃！")
             return
     
 
@@ -113,15 +118,15 @@ def main():
     "xhr.open('POST', '" + "http://" + Config.HTTP_SERVER_HOST + ":" + str(Config.HTTP_SERVER_PORT) + Config.HTTP_SERVER_PATH + "', true);"\
     "xhr.setRequestHeader('content-type', 'application/json');"\
     "xhr.onreadystatechange = function() {"\
-    "if (xhr.readyState == 4) {console.log(xhr.responseText);"\
-	"var result = JSON.parse(xhr.responseText);console.log(result);"\
+    "if (xhr.readyState == 4) {"\
+	"var result = JSON.parse(xhr.responseText);console.log(result.data);"\
     + hook_parame_name + " = result.data;"\
     "}"\
     "};"\
     "var sendData = {key:'" + Config.HOOK_REQUEST_KEY + "',data:" + hook_parame_name + "};"\
     "xhr.send(JSON.stringify(sendData));"
     print(hook_script_str_1)
-    hook_script_str_2 = "caijisec: eval(atob(`{0}`))".format(base64.b64encode(hook_script_str_1.encode("utf-8")).decode("utf-8"))
+    hook_script_str_2 = "eval(atob(`{0}`))".format(base64.b64encode(hook_script_str_1.encode("utf-8")).decode("utf-8"))
     print("payload:")
     print(hook_script_str_2)
 
