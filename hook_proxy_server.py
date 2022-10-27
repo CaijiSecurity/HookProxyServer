@@ -62,9 +62,9 @@ class HookProxyServerHandler(BaseHTTPRequestHandler):
                     'Content-Type': 'application/json'
                 }
                 conn.set_tunnel(Config["PROXY_HTTP_SERVER_HOST"] + ":" + str(Config["PROXY_HTTP_SERVER_PORT"]))
-                conn.request("POST", "/proxy", payload, headers)
+                conn.request("POST", "/proxy", payload.encode('utf-8'), headers)
                 res = conn.getresponse()
-                res_data = res.read()
+                res_data = res.read().decode('utf-8')
                 #-----------------------转发到ProxyServer-end-----------------------
                 try:
                     res_dict = json.loads(res_data)
@@ -141,7 +141,7 @@ def main():
         print("-"*50)
         hook_parame_name = input("输入要代理的变量名字：")
         hook_script_str_1 = "var xhr = new XMLHttpRequest();"\
-        "xhr.open('POST', '" + "http://" + Config["HTTP_SERVER_HOST"] + ":" + str(Config["HTTP_SERVER_PORT"]) + Config["HTTP_SERVER_PATH"] + "', true);"\
+        "xhr.open('POST', '" + "http://" + Config["HTTP_SERVER_HOST"] + ":" + str(Config["HTTP_SERVER_PORT"]) + Config["HTTP_SERVER_PATH"] + "', false);"\
         "xhr.setRequestHeader('content-type', 'application/json');"\
         "xhr.onreadystatechange = function() {"\
         "if (xhr.readyState == 4) {"\
