@@ -12,8 +12,6 @@ Config = {
     "SCRIPT_PARENT_DIR": os.path.split(os.path.realpath(__file__))[0]
 }
 
-
-
 class CaijiSecHTTPServer(HTTPServer):
     def __init__(self, server_address, RequestHandlerClass, config_dict, bind_and_activate: bool = ...) -> None:
         super().__init__(server_address, RequestHandlerClass, bind_and_activate)
@@ -42,6 +40,12 @@ class HookInvokeServerHandler(BaseHTTPRequestHandler):
             with open(os.path.join(Config["SCRIPT_PARENT_DIR"], "hookAgent.js"), "r") as f:
                 res_data = f.read()
             self._caiji_easy_response(res_data, "application/javascript")
+        elif self.path == "/get":
+            res_data = "testHelloGet"
+            self._caiji_easy_response(res_data, "application/javascript")
+        elif self.path == "/push":
+            res_data = "testHelloPush"
+            self._caiji_easy_response(res_data, "application/javascript") 
         else:
             self._caiji_easy_response("开发中...", "text/html;charset=UTF-8")
 

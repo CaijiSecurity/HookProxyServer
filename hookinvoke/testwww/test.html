@@ -1,16 +1,21 @@
 <!DOCTYPE html>
-<header>
+
+<head>
     <meta charset="utf-8">
     <title>HookInvoke</title>
     <script type="text/javascript" src="test.js"></script>
-</header>
+</head>
 
 <body>
     <textarea id="testInput"></textarea>
     <button id="testButton">反转</button>
     <textarea id="testOutput"></textarea>
     <script>
-        document.getElementById("testOutput")
+        document.getElementById("testButton").onclick = function () {
+            document.getElementById("testOutput").value = do_reverse(
+                document.getElementById("testInput").value
+            )
+        }
     </script>
 </body>
 
